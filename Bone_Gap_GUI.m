@@ -421,7 +421,12 @@ function gap_measurement = Segment_Bone_Gap(handles, x, y)
     plot(x_sample(ndx_start:ndx_end), y_sample(ndx_start:ndx_end), 'r*-')
     
     % Measure this in terms of millimeters (by using the image pixel size)
+    % Piece wise
     gap_measurement = length(ndx_start:ndx_end) *  handles.images(handles.image_index).hdr.dime.pixdim(2);
+    
+    % Use a direct line
+    sqrt((x_sample(ndx_start) - x_sample(ndx_end))^2 + (y_sample(ndx_start) - y_sample(ndx_end))^2)
+    
     
     % If the image is upsample apply the correction here
     gap_measurement = gap_measurement * 1/handles.upsample;
@@ -560,7 +565,7 @@ function Show_Image(handles)
         
         % Is the upsample image checked or not?   
         if (get(handles.upsample_image_checkmark, 'Value') == true)
-            handles.upsample = str2num(get(handles.upsample_image_edit,'String'));
+            handles.upsample = str2num(get(handles.upsample_image_edit,'String'));            
             temp_image_slice = imresize(temp_image(:,:,handles.curr_slice), handles.upsample);
             imagesc(temp_image_slice)
         else       
