@@ -19,6 +19,8 @@
   -- 3 clicks for an angle measurement
 - Adjust the **Threshold** slider to achieve a good bone gap measurement (will appear as a red line and dots on the zoomed in image)
 - Click on **Record Measurement** to record the current measurement
+- **To begin a measurement click using the left mouse**
+- **To end a measurement click with the right mouse button**
 
 # Export
   - Click on **Export Measurement** to export to Excel

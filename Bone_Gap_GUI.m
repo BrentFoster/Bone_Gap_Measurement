@@ -57,6 +57,8 @@ handles.output = hObject;
 
 % We are adding analyze read/write files in the following folder.
 addpath('NIfTI_20140122')
+addpath('enableWL')
+
 
 % Initilize some variables
 handles.colormap = 'gray';
