@@ -389,10 +389,11 @@ function [x,y, gap_measurement, angle_measurement] = Get_Measurements(handles,x,
         cla(handles.axes3)
         
     end
-
-    % Set the GUI label to show this two measurements
-    set(handles.gap_measurement_label, 'String', num2str(gap_measurement))   
-    set(handles.angle_measurement_label, 'String', num2str(angle_measurement))
+    
+            % Set the GUI label to show this number
+        set(handles.gap_measurement_label, 'String', num2str(gap_measurement))
+            % Set the GUI label to show this number
+        set(handles.angle_measurement_label, 'String', num2str(angle_measurement))
 
 function angle_measurement = Calculate_Angle(handles, x, y)
     % Calculate the angle between the three given points    
