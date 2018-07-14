@@ -1,5 +1,7 @@
 # Bone Gap Measurement Tool
 
+![GUI Layout](GUI_Layout.png)
+
 # How To Run
 
   - Right click on "Bone_Gap_GUI.m" and click Run
