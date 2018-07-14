@@ -72,11 +72,8 @@ handles.upsample = 1;
 handles.measure_num = 1;
 
 % Select a folder of images to measure
-% directoryname = uigetdir('Select a folder of images to measure');
-directoryname = 'C:\Users\Brent\Desktop\4D Images\'
-% directoryname = 'D:\Google Drive\Research\MRI Wrist Images\Active MRI\Analyze\Volunteer 3 Right\VIBE\'
-% directoryname = 'D:\Google Drive\Research\MRI Wrist Images\Active MRI\Analyze\Volunteer 3 Right\Radial Ulnar FLASH 100\';
-% directoryname = 'D:\Google Drive\Research\Projects\Shape Analysis PCA\Matlab Surface Registration\VIBE_Labels_Neutral\'
+directoryname = uigetdir('Select a folder of images to measure');
+
 % Get the names of the files in the selected folder
 listing = dir(directoryname);
 
@@ -206,7 +203,17 @@ function export_button_Callback(hObject, eventdata, handles)
 % Export the output array to a CSV file
 filename = 'Output_Measures.xlsx'
 
-writetable(struct2table(handles.Output),filename);
+try
+    writetable(struct2table(handles.Output),filename);
+catch
+    % struct2table() gives an error if there is only one row
+    % Convert to a table this way if struct2table() fails
+    largeStruct = repmat(handles.Output,2,1);
+    table = struct2table(largeStruct);
+    table = table(1,:);
+    writetable(table,filename);
+    
+end
 winopen 'Output_Measures.xlsx'
 
 
@@ -303,8 +310,7 @@ handles.threshold = round(get(hObject,'Value'), 2);
 set(handles.threshold_label, 'String', num2str(handles.threshold))
 
 % Redo the measurement and plot
-[handles.x,handles.y] = Get_Measurements(handles, handles.x, handles.y); 
-
+[handles.x,handles.y, handles.gap_measurement, handles.angle_measurement] = Get_Measurements(handles, handles.x, handles.y); 
 
 % Update handles structure
 guidata(hObject, handles);
@@ -333,8 +339,6 @@ function figure1_KeyPressFcn(hObject, eventdata, handles)
 %	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
 % handles    structure with handles and user data (see GUIDATA)
 
-
-
     which_button = eventdata.Key;
 
     switch which_button
@@ -350,13 +354,12 @@ function figure1_KeyPressFcn(hObject, eventdata, handles)
 function [x,y, gap_measurement, angle_measurement] = Get_Measurements(handles,x,y)
     
     gap_measurement = [];
-    angle_measurement = []
-    
+    angle_measurement = [];    
     
     % If there is no x or y supplied ask the user to input some
     if (isempty(x) || isempty(y))
         % Get the measurement from the image
-        [x,y] = Get_Input_Line(handles)
+        [x,y] = Get_Input_Line(handles);
         
         % Plot the line selected by the user in axes 1
         axes(handles.axes1)
@@ -459,11 +462,10 @@ function gap_measurement = Segment_Bone_Gap(handles, x, y)
     
     % Measure this in terms of millimeters (by using the image pixel size)
     % Piece wise
-    gap_measurement = length(ndx_start:ndx_end) *  handles.images(handles.image_index).hdr.dime.pixdim(2);
+%     gap_measurement = length(ndx_start:ndx_end) *  handles.images(handles.image_index).hdr.dime.pixdim(2);
     
     % Use a direct line
-    sqrt((x_sample(ndx_start) - x_sample(ndx_end))^2 + (y_sample(ndx_start) - y_sample(ndx_end))^2)
-    
+    gap_measurement = sqrt((x_sample(ndx_start) - x_sample(ndx_end))^2 + (y_sample(ndx_start) - y_sample(ndx_end))^2) *  handles.images(handles.image_index).hdr.dime.pixdim(2);    
     
     % If the image is upsample apply the correction here
     gap_measurement = gap_measurement * 1/handles.upsample;    
