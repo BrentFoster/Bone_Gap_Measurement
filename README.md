@@ -1,6 +1,6 @@
 # Bone Gap Measurement Tool
 
-![GUI Layout](GUI_Layout.png)
+![GUI Layout](GUI_Layout.PNG)
 
 # How To Run
 
