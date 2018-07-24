@@ -22,7 +22,7 @@ function varargout = Bone_Gap_GUI(varargin)
 
 % Edit the above text to modify the response to help Bone_Gap_GUI
 
-% Last Modified by GUIDE v2.5 13-Jul-2018 17:01:15
+% Last Modified by GUIDE v2.5 24-Jul-2018 09:28:07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -88,15 +88,31 @@ for i = 3:length(listing)
     try
         handles.images(iter) = load_nii([directoryname '\' listing(i).name]);   
         
-        if (length(size(handles.images(iter).img)) == 3)
-            % Rotate the image (since load_nii always rotates it 90 degrees)
-            temp_img = [];
-            for z = 1:size(handles.images(iter).img,3)
-                temp_img(:,:,z) = imrotate(handles.images(iter).img(:,:,z), -90);    
-            end  
-            handles.images(iter).img = temp_img;        
+        % Check to see if the image needs to be flipped
+        if (size(handles.images(iter).img,3) < 10)
+            handles.images(iter).img = permute(handles.images(iter).img,[1 3 2 4]);
         end
-        
+                
+%         if (length(size(handles.images(iter).img)) == 3)
+%             % Rotate the image (since load_nii always rotates it 90 degrees)
+%             temp_img = [];
+%             for z = 1:size(handles.images(iter).img,3)
+%                 temp_img(:,:,z) = imrotate(handles.images(iter).img(:,:,z), -90);    
+%             end  
+%             handles.images(iter).img = temp_img;        
+%         else
+%            % This is a 4D image 
+%            for j = 1:size(size(handles.images(iter).img))
+%                % Rotate the image (since load_nii always rotates it 90 degrees)
+%             temp_img = [];
+%             for z = 1:size(handles.images(iter).img,3)
+%                 temp_img(:,:,z) = imrotate(handles.images(iter).img(:,:,z), -90);    
+%             end  
+%             handles.images(iter).img = temp_img;    
+%            end
+%             
+%         end
+%         
         % Save the file name of the loaded image in a cell array
         str_array{iter} = listing(i).name; 
         
@@ -591,9 +607,11 @@ function Show_Image(handles)
         temp_img = temp_image(:,handles.curr_slice,:,handles.curr_time_slice);        
         temp_img = ipermute(temp_img, [1 3 2]);
         
-        % Rotate the image 90 degrees now
-        temp_img = imrotate(temp_img, 90);
-        
+        % Rotate the image 90 degrees now (if the checkmark is selected)
+        if (get(handles.rotate_90_degrees_checkbox, 'Value') == true)
+         temp_img = imrotate(temp_img, 90);
+        end       
+
         
         % Is the upsample image checked or not?   
         if (get(handles.upsample_image_checkmark, 'Value') == true)
@@ -735,3 +753,15 @@ function Untitled_1_Callback(hObject, eventdata, handles)
 % hObject    handle to Untitled_1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in rotate_90_degrees_checkbox.
+function rotate_90_degrees_checkbox_Callback(hObject, eventdata, handles)
+% hObject    handle to rotate_90_degrees_checkbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of rotate_90_degrees_checkbox
+
+% Update the image shown now
+Show_Image(handles);
