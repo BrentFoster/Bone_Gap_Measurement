@@ -22,7 +22,7 @@ function varargout = Bone_Gap_GUI(varargin)
 
 % Edit the above text to modify the response to help Bone_Gap_GUI
 
-% Last Modified by GUIDE v2.5 24-Jul-2018 09:28:07
+% Last Modified by GUIDE v2.5 24-Jul-2018 09:39:33
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -72,6 +72,8 @@ handles.angle_measurement = 0;
 handles.Output = {};
 handles.upsample = 1;
 handles.measure_num = 1;
+handles.rotate_image_degrees = 0;
+
 
 % Select a folder of images to measure
 directoryname = uigetdir('Select a folder of images to measure');
@@ -587,6 +589,11 @@ function Show_Image(handles)
     % Is this a 3D or 4D image?    
     if (length(size(handles.images(handles.image_index).img)) == 3)
         
+        % Rotate the image 90 degrees now (if the checkmark is selected)
+        temp_image = imrotate(temp_image, handles.rotate_image_degrees);
+      
+
+        
         % Is the upsample image checked or not?   
         if (get(handles.upsample_image_checkmark, 'Value') == true)
             handles.upsample = str2num(get(handles.upsample_image_edit,'String'));            
@@ -607,10 +614,9 @@ function Show_Image(handles)
         temp_img = temp_image(:,handles.curr_slice,:,handles.curr_time_slice);        
         temp_img = ipermute(temp_img, [1 3 2]);
         
-        % Rotate the image 90 degrees now (if the checkmark is selected)
-        if (get(handles.rotate_90_degrees_checkbox, 'Value') == true)
-         temp_img = imrotate(temp_img, 90);
-        end       
+        % Rotate the image 90 degrees now        
+        temp_img = imrotate(temp_img, handles.rotate_image_degrees);
+               
 
         
         % Is the upsample image checked or not?   
@@ -763,5 +769,26 @@ function rotate_90_degrees_checkbox_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of rotate_90_degrees_checkbox
 
+
+
+
+% --- Executes on button press in rotate_image_90_button.
+function rotate_image_90_button_Callback(hObject, eventdata, handles)
+% hObject    handle to rotate_image_90_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Add 90 degrees to the handles.rotate_image_degrees variablle
+if (handles.rotate_image_degrees == 270)
+    handles.rotate_image_degrees = 0; % Reset to zero
+else
+    handles.rotate_image_degrees = handles.rotate_image_degrees + 90;
+end
+
 % Update the image shown now
 Show_Image(handles);
+
+
+% Update handles structure
+guidata(hObject, handles);
+
