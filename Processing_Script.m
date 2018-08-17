@@ -53,7 +53,7 @@ g=g+1;
 
 
 figure('Color', [1 1 1])
-boxplot(z,g, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
+boxplot(z,g, 'Notch','off','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
 ylabel('Scaphoid-Lunate Gap (mm)')
 title('Bone Gap vs. Wrist Angle on Active MRI')
 
@@ -62,34 +62,61 @@ hold on
 % histogram(x,angle_bins)
 
 %% Split by scan type
-data.four_d_scan_type
+close all
+
 
 
 % Create box plots
 z=[];
 g=[];
 temp= [];
-for i = 1:length(unique(ndx))
-    for j = 1:length(unique(data.four_d_scan_type)) 
+iter = 0;
+labels = {};
+
+figure('Color', [1 1 1])
+
+scan_types = {'Gridding 100 Spokes', 'Gridding 40 Spokes', 'TV L1 40 Spokes'};
+
+for j = 1:length(unique(data.four_d_scan_type)) 
+    h=subplot(1,3,j)
+    z=[];
+    g=[];
+    temp= [];
+    iter = 0;
+    labels = {};
+    
+    for i = 1:length(unique(ndx))
         [i j]
         
         temp = [ndx; data.four_d_scan_type']';
         temp = data.four_d_gaps(all((temp == [i j])'));
         z = [z; temp]   ;
         
-        g = [g; (i+j-1)*ones(length(temp), 1)];
+        g = [g; iter*ones(length(temp), 1)];
+        iter = iter+ 1;
+        labels{iter} = ['Scan ' num2str(j) ' position ' num2str(i)]
         
     end
+    
+
+%     boxplot(z,g, 'Labels', labels)%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
+    boxplot(z,g, 'Labels', {'UD', 'UD - N', 'N', 'N-RD', 'RD'})%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
+     
+    % Adjust the boxplot to the left some
+    pos = get(h, 'Position') ;
+    posnew = pos; posnew(1) = posnew(1) + 0.04; set(h, 'Position', posnew);
+
+
+    ylabel('Scaphoid-Lunate Gap (mm)')
+
+    title('Bone Gap vs. Wrist Angle on Active MRI')
+    title(scan_types{j})
+    ylim([0.2 4.7])
+    hold on
+
 end
 
 
-
-figure('Color', [1 1 1])
-boxplot(z,g)%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
-ylabel('Scaphoid-Lunate Gap (mm)')
-title('Bone Gap vs. Wrist Angle on Active MRI')
-
-hold on
 
 %% 
 
@@ -104,4 +131,32 @@ combined_data = combined_data(idx,:)   % sort the whole matrix using the sort in
 [~,idx] = sort(combined_data(:,3))
 combined_data = combined_data(idx,:)   
 
+%% VIBE Gap Measurements
+
+% Order is Neutral, Radial Deviation, Ulnar Deviation
+z=[];
+g=[];
+for i = 1:length(data.VIBE_gaps)
+    
+   z = [z data.VIBE_gaps(i)];
+   
+   if (mod(i,3) == 0)
+        g = [g 3];
+   else
+       g = [g  mod(i,3)];
+   end
+  
+    
+end
+
+% Reorder to have RD, Neutral, UD
+temp = g;
+g(temp == 1) = 2;
+g(temp == 2) = 1;
+figure('Color', [1 1 1])
+boxplot(z,g, 'Labels', {'Radial Deviation', 'Neutral', 'Ulnar Deviation'})%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
+
+ylabel('Scaphoid-Lunate Gap (mm)')
+ylim([0.2 4.7])
+title('VIBE - Bone Gap vs. Wrist Angle')
 
