@@ -10,7 +10,7 @@ load('data_B.mat')
  
 data_B.four_d_angle_ndx = data_B.four_d_angle_ndx';
 data_B = rmfield(data_B, 'angles');
-data = data_B;
+% data = data_B;
 
 load('data_C.mat')
 % data = data_C;
@@ -37,7 +37,7 @@ data
 end
 
 %% Calculate Inter-Observer Correlation Coefficient
-
+clc
 % For all images
 f = fieldnames(data_C);
 r_values = [];
@@ -51,20 +51,31 @@ r_values
 % By scan type (i.e. number of spokes and reconstruction type)
 f = fieldnames(data_C);
 r_values_scan_type = [];
-for i = [2,3]  % Structure field number
+p_values_scan_type = [];
+RL_values_scan_type = [];
+RU_values_scan_type = [];
+for i = [2]  % Structure field number
     for j = [1,2,3] % Scan type
         
         ndx = find( data_B.four_d_scan_type == j);
         temp_B = data_B.(f{i});
         temp_C = data_C.(f{i});
-        R = corrcoef(temp_B(ndx), temp_C(ndx));
-        r_values_scan_type(i,j) = R(2);
+        [R,P,RL,RU] = corrcoef(temp_B(ndx), temp_C(ndx),'Alpha',0.00001);
+        r_values_scan_type(i-1,j) = R(2);
+        p_values_scan_type(i-1,j) = P(2);
+        RL_values_scan_type(i-1,j) = RL(2);
+        RU_values_scan_type(i-1,j) = RU(2);
+        
         
     end
 end
-f{[2,3]}
+% f{[2,3]}
 r_values_scan_type
+p_values_scan_type
+RL_values_scan_type
+RU_values_scan_type
 
+%%
 
 % Comparison to VIBE (i.e take the RD, Neutral, and UD positions)
 % By scan type (i.e. number of spokes and reconstruction type)
@@ -260,8 +271,8 @@ end
 mean_SL
 std_SL
 
-%% Split by scan type
-% close all
+%% Split by scan type vs VIBE
+close all
 
 
 
@@ -276,15 +287,20 @@ labels = {};
 
 figure('Color', [1 1 1])
 
-scan_types = {'Gridding 100 Spokes', 'Gridding 40 Spokes', 'TV L1 40 Spokes'};
+scan_types = {'Gridding (100 Spokes)', 'Gridding (40 Spokes)', 'FD+DCT (40 Spokes)'};
 mean_SL = [];
 std_SL = [];
 
+% Median SL Gap was 1.5 on VIBE
+mean_VIBE_SL_Gap = 1.5;
 
+mean_SL_all_positions = [];
+std_SL_all_positions = [];
 
+all_measurements = {};
 
 for j = 1:length(unique(data.four_d_scan_type)) 
-    h=subplot(1,4,j)
+    h=subplot(2,2,j);
     z=[];
     g=[];
     temp= [];
@@ -292,21 +308,20 @@ for j = 1:length(unique(data.four_d_scan_type))
     labels = {};
     
     for i = [1,3,5]%length(unique(ndx))
-        [i j]
-        
+       
         temp = [ndx; data.four_d_scan_type']';
         temp = data.four_d_gaps(all((temp == [i j])'));
         z = [z; temp]   ;
         
         g = [g; iter*ones(length(temp), 1)];
         iter = iter+ 1;
-        labels{iter} = ['Scan ' num2str(j) ' position ' num2str(i)]
+        labels{iter} = ['Scan ' num2str(j) ' position ' num2str(i)];
         
     end
     
 
 %     boxplot(z,g, 'Labels', labels)%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
-    boxplot(z,g, 'Labels', {'UD', 'N','RD'})%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
+    boxplot(z,g, 'Labels', {'Ulnar Deviation', 'Neutral', 'Radial Deviation'})%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
      
     % Adjust the boxplot to the left some
     pos = get(h, 'Position') ;
@@ -319,17 +334,25 @@ for j = 1:length(unique(data.four_d_scan_type))
     title(scan_types{j})
     ylim([0.2 4.7])
     hold on
+    % Mean VIBE is 1.64 mm
+%     mean_VIBE_SL_Gap = 1.64;
+    hold on
+    line(0:4,mean_VIBE_SL_Gap * ones(1,5),'Color','red','LineStyle','--', 'LineWidth', 2)
+    axis square
     
-    
-    for k = 1:5
+    for k = 1:3
         mean_SL(j,k) = mean(z(g==k-1));
         std_SL(j,k) = std(z(g==k-1));
     end
+    mean_SL_all_positions = [mean_SL_all_positions mean(z)];
+    std_SL_all_positions = [std_SL_all_positions std(z)];
+    
+    all_measurements{end+1} = z;
 
 end
 
-mean_SL
-std_SL
+% mean_SL
+% std_SL
 
 
 % Order is Neutral, Radial Deviation, Ulnar Deviation
@@ -352,8 +375,8 @@ end
 temp = g;
 g(temp == 1) = 2;
 g(temp == 2) = 1;
-h=subplot(1,4,4);
-boxplot(z,g, 'Labels', {'RD', 'N', 'UD'})%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
+h=subplot(2,2,4);
+boxplot(z,g, 'Labels', {'Ulnar Deviation', 'Neutral', 'Radial Deviation'})%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
 
 % Adjust the boxplot to the left some
 pos = get(h, 'Position') ;
@@ -361,9 +384,205 @@ posnew = pos; posnew(1) = posnew(1) + 0.04; set(h, 'Position', posnew);
 
 ylabel('Scaphoid-Lunate Gap (mm)')
 ylim([0.2 4.7])
-title('VIBE')
+title('VIBE (High Resolution)')
+hold on
+line(0:4,mean_VIBE_SL_Gap * ones(1,5),'Color','red','LineStyle','--', 'LineWidth', 2)
+
+mean_SL_all_positions = [mean_SL_all_positions mean(z)]
+std_SL_all_positions = [std_SL_all_positions std(z)]
+all_measurements{end+1} = z';
+
+axis square
+%%
+% Compare the measurements with VIBE
+p_value=[];
+for i = 1:3
+    [p,h,stats] = ranksum(all_measurements{i},all_measurements{4});
+    p_value(i) = p;
+end
+p_value
+
+%%
+%% Split by scan type vs VIBE
+close all
 
 
+
+% Create box plots
+z=[];
+g=[];
+temp= [];
+iter = 0;
+labels = {};
+
+% data.four_d_scan_type = data.four_d_scan_type';
+
+figure('Color', [1 1 1])
+
+scan_types = {'Gridding (100 Spokes)', 'Real-Time MRI (Fast GRE)', 'FD+DCT (40 Spokes)'};
+mean_SL = [];
+std_SL = [];
+
+% Median SL Gap was 1.5 on VIBE
+mean_VIBE_SL_Gap = 1.5;
+
+mean_SL_all_positions = [];
+std_SL_all_positions = [];
+
+all_measurements = {};
+
+for j = 2
+    h=subplot(1,2,j-1);
+    z=[];
+    g=[];
+    temp= [];
+    iter = 0;
+    labels = {};
+    
+    for i = [1,3,5]%length(unique(ndx))
+       
+        temp = [ndx; data.four_d_scan_type']';
+        temp = data.four_d_gaps(all((temp == [i j])'));
+        z = [z; temp]   ;
+        
+        g = [g; iter*ones(length(temp), 1)];
+        iter = iter+ 1;
+        labels{iter} = ['Scan ' num2str(j) ' position ' num2str(i)];
+        
+    end
+    
+
+%     boxplot(z,g, 'Labels', labels)%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
+    boxplot(z,g, 'Labels', {'Ulnar Deviation', 'Neutral', 'Radial Deviation'})%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
+     
+    % Adjust the boxplot to the left some
+    pos = get(h, 'Position') ;
+    posnew = pos; posnew(1) = posnew(1) + 0.04; set(h, 'Position', posnew);
+
+
+    ylabel('Scaphoid-Lunate Gap (mm)')
+
+    title('Bone Gap vs. Wrist Angle on Active MRI')
+    title(scan_types{j})
+    ylim([0.2 4.7])
+    hold on
+    % Mean VIBE is 1.64 mm
+%     mean_VIBE_SL_Gap = 1.64;
+    hold on
+%     line(0:4,mean_VIBE_SL_Gap * ones(1,5),'Color','red','LineStyle','--', 'LineWidth', 2)
+    axis square
+    
+    for k = 1:3
+        mean_SL(j,k) = mean(z(g==k-1));
+        std_SL(j,k) = std(z(g==k-1));
+    end
+    mean_SL_all_positions = [mean_SL_all_positions mean(z)];
+    std_SL_all_positions = [std_SL_all_positions std(z)];
+    
+    all_measurements{end+1} = z;
+
+end
+
+% mean_SL
+% std_SL
+
+
+% Order is Neutral, Radial Deviation, Ulnar Deviation
+z=[];
+g=[];
+for i = 1:length(data.VIBE_gaps)
+    
+   z = [z data.VIBE_gaps(i)];
+   
+   if (mod(i,3) == 0)
+        g = [g 3];
+   else
+       g = [g  mod(i,3)];
+   end
+  
+    
+end
+
+% Reorder to have RD, Neutral, UD
+temp = g;
+g(temp == 1) = 2;
+g(temp == 2) = 1;
+h=subplot(1,2,2);
+boxplot(z,g, 'Labels', {'Ulnar Deviation', 'Neutral', 'Radial Deviation'})%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
+
+% Adjust the boxplot to the left some
+pos = get(h, 'Position') ;
+posnew = pos; posnew(1) = posnew(1) + 0.04; set(h, 'Position', posnew);
+
+ylabel('Scaphoid-Lunate Gap (mm)')
+ylim([0.2 4.7])
+title('High Resolution Static MRI (3D T_{1})')
+hold on
+% line(0:4,mean_VIBE_SL_Gap * ones(1,5),'Color','red','LineStyle','--', 'LineWidth', 2)
+
+mean_SL_all_positions = [mean_SL_all_positions mean(z)]
+std_SL_all_positions = [std_SL_all_positions std(z)]
+all_measurements{end+1} = z';
+
+axis square
+%% TV L1 vs VIBE Mean SL Gap
+close all
+
+
+
+
+
+
+figure('Color', [1 1 1])
+
+scan_types = {'Gridding 100 Spokes', 'Gridding 40 Spokes', 'SL Gap - FD+DCT 40 Spokes'};
+mean_SL = [];
+std_SL = [];
+
+
+
+
+for j = 3
+
+    z=[];
+    g=[];
+    temp= [];
+    iter = 0;
+    labels = {};
+    
+    for i = [1,3,5]%length(unique(ndx))
+        temp = [ndx; data.four_d_scan_type']';
+        temp = data.four_d_gaps(all((temp == [i j])'));
+        z = [z; temp]   ;
+        
+        g = [g; iter*ones(length(temp), 1)];
+        iter = iter+ 1;
+%         labels{iter} = ['Scan ' num2str(j) ' position ' num2str(i)]
+        
+    end
+    
+    boxplot(z,g, 'Labels', {'Ulnar Deviation', 'Neutral','Radial Deviation'})%, 'Notch','on','labels', {'Ulnar Deviation', 'UD - Neutral', 'Neutral', 'N-RD', 'Radial Deviation'})
+     
+
+    ylabel('Scaphoid-Lunate Gap (mm)')
+
+    title('Bone Gap vs. Wrist Angle on Active MRI')
+    title(scan_types{j})
+    ylim([0.2 4.7])
+    hold on
+    
+    
+
+
+end
+
+
+% Mean VIBE is 1.64 mm
+mean_VIBE_SL_Gap = 1.64;
+hold on
+line(0:4,mean_VIBE_SL_Gap * ones(1,5),'Color','red','LineStyle','--', 'LineWidth', 2)
+
+axis square
 %% 
 
 combined_data = [data.four_d_gaps data.four_d_angles data.four_d_scan_type data.four_d_angle_ndx']
